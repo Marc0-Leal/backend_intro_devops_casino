@@ -204,3 +204,4 @@ para los criterios completos.
 ## Repositorio del frontend
 
 [`casino-frontend`](../casino-frontend)
+# deploy trigger
