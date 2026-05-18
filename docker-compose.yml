@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    build: ./db
+    image: casino-db:latest
+    container_name: casino-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: casino
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: casino_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - casino-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U casino -d casino_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    image: casino-backend:latest
+    container_name: casino-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: db
+      DB_USER: casino
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: casino_db
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: "*"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - casino-net
+
+networks:
+  casino-net:
+    driver: bridge
+
+volumes:
+  pg_data:
