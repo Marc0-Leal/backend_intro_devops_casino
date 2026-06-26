@@ -32,6 +32,24 @@ app.get('/health', async (req, res) => {
   }
 });
 
+
+// /livez — Liveness: el proceso está vivo, no depende de la BD.
+// Si falla, Kubernetes reinicia el pod.
+app.get('/livez', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// /readyz — Readiness: listo para recibir tráfico, verifica la BD.
+// Si falla, Kubernetes saca el pod del balanceo sin reiniciarlo.
+app.get('/readyz', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', db: 'connected' });
+  } catch (err) {
+    res.status(503).json({ status: 'degraded', db: 'down', error: err.message });
+  }
+});
+
 // Bienvenida
 app.get('/', (req, res) => {
   res.json({
