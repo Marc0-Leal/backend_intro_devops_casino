@@ -1,40 +1,27 @@
-# =============================================================
-# ETAPA 1: builder
-# =============================================================
-FROM node:20-alpine AS builder
+# ---------- Etapa 1: build (instala dependencias) ----------
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
+RUN npm install --omit=dev
 
-RUN if [ -f package-lock.json ]; then \
-      npm ci --omit=dev; \
-    else \
-      npm install --omit=dev; \
-    fi
+# ---------- Etapa 2: runtime ----------
+FROM node:20-slim
 
-COPY src ./src
-
-# =============================================================
-# ETAPA 2: runtime
-# =============================================================
-FROM node:20-alpine AS runtime
-
-LABEL maintainer="casino-devops"
+RUN useradd --create-home --shell /bin/bash appuser
 
 WORKDIR /app
 
-COPY --from=builder --chown=node:node /app/node_modules ./node_modules
-COPY --from=builder --chown=node:node /app/src          ./src
-COPY --chown=node:node package.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY package*.json ./
+COPY ./src ./src
 
-RUN chown -R node:node /app
+RUN chown -R appuser:appuser /app
+USER appuser
 
-USER node
+ENV NODE_ENV=production
 
 EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD node -e "require('http').get('http://127.0.0.1:3000/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1));"
 
 CMD ["node", "src/server.js"]
