@@ -1,25 +1,31 @@
 name: Build, Push y Deploy - casino-backend
-
 on:
   push:
     branches:
       - deploy
   workflow_dispatch:
-
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: casino-backend
   EKS_CLUSTER: vidalcasino-cluster
   DEPLOYMENT_NAME: casino-backend
   CONTAINER_NAME: casino-backend
-
 jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias y ejecutar pruebas
+        run: |
+          npm ci
+          npm test
 
       - name: Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v4
