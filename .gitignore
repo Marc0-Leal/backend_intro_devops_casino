@@ -2,5 +2,13 @@ node_modules
 .env
 *.log
 coverage
+<<<<<<< HEAD
 .git/
 .DS_Store
+=======
+.DS_Store
+
+# Claude Code
+.claude/
+CLAUDE.md
+>>>>>>> upstream/main
